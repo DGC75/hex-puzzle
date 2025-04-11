@@ -23,7 +23,7 @@ def solve_recursive(
     grid: Grid,
     pieces: List[Piece],
     index: int = 0,
-    check_at: int = 3,
+    check_at: int = 0,
 ) -> bool:
     """
     Recursive function to solve a problem.
@@ -49,7 +49,7 @@ def solve_recursive(
     Returns:
         True if the problem can be solved. False otherwise.
     """
-    show_solution(grid)
+    
 
     if index == len(pieces):
         # No more pieces to position => Solved!
@@ -58,6 +58,10 @@ def solve_recursive(
     if index >= check_at and grid.is_impossible():
         return False
 
+
+    show_solution(grid)
+
+    
     for rot in rot_list:
         for x in allowed_xs_list:
             for y in allowed_ys_lists[x-1]:
@@ -223,6 +227,7 @@ def solve(
 
     grid, pieces = prepare_problem(filename)
     random.seed(seed)
+    print("seed:", seed)    
     random.shuffle(pieces)
 
     # solver = solve_iter if use_iterative else solve_recursive
