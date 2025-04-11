@@ -49,6 +49,8 @@ def solve_recursive(
     Returns:
         True if the problem can be solved. False otherwise.
     """
+    show_solution(grid)
+
     if index == len(pieces):
         # No more pieces to position => Solved!
         return True
@@ -183,12 +185,22 @@ def save_solution_to_config(pieces: List[Piece], filename: str):
         with open(filename, "a") as fp:
             yaml.safe_dump({"solution": solution}, fp)
 
+def show_solution(grid: Grid):
+    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    grid.draw(ax=ax)
+    ax.set(xlim=(2, 23), ylim=(-3, 18))
+    ax.set_aspect("equal")
+    plt.axis("off")
+    plt.tight_layout()
+    plt.show(block=False)
+    plt.pause(1)
+    plt.close()
 
 
 def solve(
     filename: str,
     seed: Optional[int] = None,
-    check_at: int = 3,
+    check_at: int = 1,
     save_solution: bool = True,
     use_iterative: bool = False,
 ):
@@ -229,13 +241,9 @@ def solve(
     if solved and save_solution:
         save_solution_to_config(pieces, filename)
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    grid.draw(ax=ax)
-    ax.set(xlim=(2, 23), ylim=(-3, 18))
-    ax.set_aspect("equal")
-    plt.axis("off")
-    plt.tight_layout()
-    plt.show()
+
+    show_solution(grid)
+
 
 
 

@@ -245,4 +245,3 @@ class Grid:
                         fontsize=12,
                         color="black" if val >= 4 else "white",
                     )
-
