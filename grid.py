@@ -141,64 +141,37 @@ class Grid:
     def is_impossible(self):
         """
         Checks whether the current grid configuration allows for solutions.
-        
-        The completely rewritten method now correctly:
-        1. Identifies all disconnected regions of free cells
-        2. Checks if each region's size is a multiple of 5
-        3. Uses proper BFS to ensure accurate region detection
+
+        This checks whether all the groups of connected free cells are 
+        composed of a number of cells multiple of 5. This assumes all the 
+        pieces are made of 5 components, and that the solution does not have 
+        empty cells.
         """
-        # Make a copy of the grid for our work
+        to_visit = []
         _grid = self.grid.copy()
-        
-        # Get all free cells
-        free_cells = []
         for x in allowed_xs_list:
             for y in allowed_ys_lists[x-1]:
-                if _grid[y, x] == FREE:
-                    free_cells.append((x, y))
-        
-        # Quick check: total free cells must be a multiple of 5
-        if len(free_cells) % 5 != 0:
-            return True
-        
-        # If there are no free cells, it's not impossible
-        if not free_cells:
-            return False
-        
-        # Find all connected regions using BFS
-        regions = []
-        while free_cells:
-            start_cell = free_cells[0]
-            region = []
-            queue = [start_cell]
-            
-            while queue:
-                x, y = queue.pop(0)
-                if (x, y) in free_cells:
-                    # Add to region and mark as visited
-                    region.append((x, y))
-                    free_cells.remove((x, y))
-                    _grid[y, x] = VISITED
-                    
-                    # Add neighbors if they're free
-                    neighbors = self.neighbors[y, x]
-                    for nx, ny in neighbors:
-                        if (nx, ny) in free_cells and _grid[ny, nx] == FREE:
-                            queue.append((nx, ny))
-            
-            # Add the complete region to our list
-            regions.append(region)
-        
-        
-        print(len(regions))
-        # Check if any region's size is not divisible by 5
-        for region in regions:
-            if len(region) % 5 != 0:
-                return True
-        
+                if _grid[y, x] != FREE:
+                    continue
+
+                # This is essentially a depth-first search
+                to_visit.extend(self.neighbors[y, x])
+                count = 1
+                _grid[y, x] = VISITED
+                while to_visit:
+                    xn, yn = to_visit.pop()
+                    if _grid[yn, xn] == FREE:
+                        count += 1
+                        _grid[yn, xn] = VISITED
+                        to_visit.extend(self.neighbors[yn, xn])
+                # Check group size
+                #print("Group size: ", count) 
+                if count % 5 != 0:
+                    return True
         return False
 
 
+ 
     def add_piece(self, piece: Piece) -> bool:
         """
         Adds a piece to the grid.

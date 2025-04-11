@@ -49,19 +49,14 @@ def solve_recursive(
     Returns:
         True if the problem can be solved. False otherwise.
     """
-    
-
     if index == len(pieces):
         # No more pieces to position => Solved!
         return True
     
     if index >= check_at and grid.is_impossible():
+        #show_solution(grid)
         return False
 
-
-    show_solution(grid)
-
-    
     for rot in rot_list:
         for x in allowed_xs_list:
             for y in allowed_ys_lists[x-1]:
@@ -71,11 +66,11 @@ def solve_recursive(
                     if solve_recursive(grid, pieces, index + 1, check_at):
                         pieces[index] = piece
                         return True
-
+                    #show_solution(grid)
                     grid.remove_piece(piece)
+                    
 
     return False
-
 
 
 # === Iterative solver ===
@@ -194,10 +189,10 @@ def show_solution(grid: Grid):
     grid.draw(ax=ax)
     ax.set(xlim=(2, 23), ylim=(-3, 18))
     ax.set_aspect("equal")
-    plt.axis("off")
+    plt.axis("on")
     plt.tight_layout()
     plt.show(block=False)
-    plt.pause(1)
+    plt.pause(0.3)
     plt.close()
 
 
