@@ -57,16 +57,18 @@ def solve_recursive(
         #show_solution(grid)
         return False
 
-    for rot in rot_list:
-        for x in allowed_xs_list:
-            for y in allowed_ys_lists[x-1]:
+    
+    for x in allowed_xs_list:
+        for y in allowed_ys_lists[x-1]:
+            for rot in rot_list:
                 piece = pieces[index].make_new(x, y, rot)
 
                 if grid.add_piece(piece):
+                    show_solution(grid)
                     if solve_recursive(grid, pieces, index + 1, check_at):
                         pieces[index] = piece
                         return True
-                    #show_solution(grid)
+                    
                     grid.remove_piece(piece)
                     
 
@@ -156,6 +158,7 @@ def prepare_problem(filename: str) -> Tuple[Grid, List[Piece]]:
         for i in range(1, NUM_PIECES+1)
         if i not in problem_conf.get("excluded_pieces", ())
     ]
+  
 
     return grid, pieces
 
@@ -191,9 +194,10 @@ def show_solution(grid: Grid):
     ax.set_aspect("equal")
     plt.axis("on")
     plt.tight_layout()
-    plt.show(block=False)
+    plt.show(block=True)
     plt.pause(0.3)
-    plt.close()
+    #plt.close()
+    
 
 
 def solve(
@@ -222,7 +226,7 @@ def solve(
 
     grid, pieces = prepare_problem(filename)
     random.seed(seed)
-    print("seed:", seed)    
+    #print("seed:", seed)    
     random.shuffle(pieces)
 
     # solver = solve_iter if use_iterative else solve_recursive
@@ -235,6 +239,12 @@ def solve(
     print(f"Ended in: {end - start:.2f} seconds")
     if not solved:
         print("The problem could not be solved! :'(")
+        # Debugging: Show the grid state and pieces
+        print("Final grid state:")
+        show_solution(grid) # Assuming Grid has a method to print its state
+        print("Remaining pieces:")
+        for piece in pieces:
+            print(piece)
     else:
         print("Problem solved! :D")
 
@@ -243,7 +253,6 @@ def solve(
 
 
     show_solution(grid)
-
 
 
 

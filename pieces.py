@@ -30,6 +30,7 @@ rot_list = list(range(3))
 
 
 
+
 class Piece:
     """
     Superclass for pieces. This defines the common behavior of all pieces.

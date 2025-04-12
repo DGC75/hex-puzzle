@@ -31,12 +31,12 @@ color_map = {
 
 # Pre-computed list of allowed values for the x coordinate and list of allowed 
 # values for the y coordinate, given an x coordinate
-allowed_xs_list = list(range(1, 10))
+allowed_xs_list = list(range(1, 10)) # [1,2,3,4,5,6,7,8,9]
 allowed_ys_lists = [
 	list(range(max(6 - x, 1), 10 - max(0, x - 5)))
 	for x in allowed_xs_list
 ]
-
+print(allowed_ys_lists)
 
 
 class Grid:
