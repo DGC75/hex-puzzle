@@ -26,7 +26,7 @@ movement_dict = {
 
 
 # Pre-computed list of possible piece rotations
-rot_list = list(range(3))
+rot_list = list(range(4))
 
 
 

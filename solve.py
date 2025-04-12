@@ -2,10 +2,12 @@ import argparse
 import random
 import time
 from typing import List, Optional, Tuple
+import copy
 
 import yaml
 
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Button
 
 
 from grid import (
@@ -17,7 +19,126 @@ from grid import (
 
 from pieces import get_piece, NUM_PIECES, Piece, rot_list
 
+# Global variables for slideshow
+fig = None
+ax = None
+grid_states = []  # List to store all grid states
+current_state_idx = -1  # Index of the currently displayed state
+auto_play = False  # Flag to control automatic playback
 
+def setup_slideshow():
+    """Initialize the figure, axis and controls for the interactive slideshow."""
+    global fig, ax, prev_button_ax, next_button_ax, play_button_ax, prev_button, next_button, play_button
+    
+    # Create figure with space for buttons at the bottom
+    fig = plt.figure(figsize=(8, 7))
+    
+    # Main plot area for the grid
+    ax = plt.axes([0.1, 0.2, 0.8, 0.7])  # [left, bottom, width, height]
+    ax.set(xlim=(2, 23), ylim=(-3, 18))
+    ax.set_aspect("equal")
+    plt.axis("on")
+    
+    # Button for previous state
+    prev_button_ax = plt.axes([0.2, 0.05, 0.15, 0.06])
+    prev_button = Button(prev_button_ax, 'Previous')
+    prev_button.on_clicked(on_prev_clicked)
+    
+    # Button for play/pause
+    play_button_ax = plt.axes([0.4, 0.05, 0.15, 0.06])
+    play_button = Button(play_button_ax, 'Play')
+    play_button.on_clicked(on_play_clicked)
+    
+    # Button for next state
+    next_button_ax = plt.axes([0.6, 0.05, 0.15, 0.06])
+    next_button = Button(next_button_ax, 'Next')
+    next_button.on_clicked(on_next_clicked)
+    
+    # Text for state counter
+    counter_ax = plt.axes([0.8, 0.05, 0.15, 0.06])
+    counter_ax.axis('off')  # Hide axis
+    
+    plt.ion()  # Turn on interactive mode
+    plt.show()
+    return fig, ax
+
+def on_prev_clicked(event):
+    """Handle click on previous button."""
+    global current_state_idx
+    if current_state_idx > 0:
+        current_state_idx -= 1
+        update_display()
+
+def on_next_clicked(event):
+    """Handle click on next button."""
+    global current_state_idx
+    if current_state_idx < len(grid_states) - 1:
+        current_state_idx += 1
+        update_display()
+
+def on_play_clicked(event):
+    """Toggle play/pause of the slideshow."""
+    global auto_play
+    auto_play = not auto_play
+    play_button.label.set_text('Pause' if auto_play else 'Play')
+    if auto_play:
+        play_slideshow()
+
+def play_slideshow():
+    """Automatically play the slideshow."""
+    global current_state_idx, auto_play
+    while auto_play and current_state_idx < len(grid_states) - 1:
+        current_state_idx += 1
+        update_display()
+        plt.pause(0.3)  # Adjust speed as desired
+    
+    if current_state_idx >= len(grid_states) - 1:
+        auto_play = False
+        play_button.label.set_text('Play')
+
+def update_display():
+    """Update the display with the current grid state."""
+    global fig, ax, current_state_idx
+    
+    # Clear previous grid visualization
+    ax.clear()
+    
+    # Draw the current grid state
+    grid_states[current_state_idx].draw(ax=ax)
+    ax.set(xlim=(2, 23), ylim=(-3, 18))
+    ax.set_aspect("equal")
+    plt.axis("on")
+    
+    # Update state counter text
+    ax.set_title(f"State {current_state_idx+1}/{len(grid_states)}")
+    
+    # Update the display
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+
+def show_solution(grid: Grid):
+    """
+    Update the slideshow with the current grid state.
+    
+    This function stores each grid state and updates the display.
+    """
+    global fig, ax, grid_states, current_state_idx
+    
+    # Initialize figure and axis if they don't exist
+    if fig is None or ax is None:
+        fig, ax = setup_slideshow()
+    
+    # Store a deep copy of the current grid state
+    grid_copy = Grid()
+    grid_copy.grid = grid.grid.copy()
+    grid_states.append(grid_copy)
+    current_state_idx = len(grid_states) - 1
+    
+    # Update the display
+    update_display()
+    
+    # Small pause to avoid overwhelming the system
+    plt.pause(0.05)
 
 def solve_recursive(
     grid: Grid,
@@ -64,7 +185,7 @@ def solve_recursive(
                 piece = pieces[index].make_new(x, y, rot)
 
                 if grid.add_piece(piece):
-                    show_solution(grid)
+                    #show_solution(grid)
                     if solve_recursive(grid, pieces, index + 1, check_at):
                         pieces[index] = piece
                         return True
@@ -187,19 +308,6 @@ def save_solution_to_config(pieces: List[Piece], filename: str):
         with open(filename, "a") as fp:
             yaml.safe_dump({"solution": solution}, fp)
 
-def show_solution(grid: Grid):
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
-    grid.draw(ax=ax)
-    ax.set(xlim=(2, 23), ylim=(-3, 18))
-    ax.set_aspect("equal")
-    plt.axis("on")
-    plt.tight_layout()
-    plt.show(block=True)
-    plt.pause(0.3)
-    #plt.close()
-    
-
-
 def solve(
     filename: str,
     seed: Optional[int] = None,
@@ -223,11 +331,20 @@ def solve(
             file (if not already present). Default: True.
         use_iterative (bool): Ignored.
     """
+    global grid_states, current_state_idx, auto_play
+    
+    # Reset slideshow state
+    grid_states = []
+    current_state_idx = -1
+    auto_play = False
 
     grid, pieces = prepare_problem(filename)
     random.seed(seed)
     #print("seed:", seed)    
     random.shuffle(pieces)
+
+    # Add initial grid state to slideshow
+    #show_solution(grid)
 
     # solver = solve_iter if use_iterative else solve_recursive
     solver = solve_recursive
@@ -240,20 +357,22 @@ def solve(
     if not solved:
         print("The problem could not be solved! :'(")
         # Debugging: Show the grid state and pieces
-        print("Final grid state:")
-        show_solution(grid) # Assuming Grid has a method to print its state
+        print("Final grid state shown in slideshow")
         print("Remaining pieces:")
         for piece in pieces:
             print(piece)
     else:
         print("Problem solved! :D")
+        print(f"Found solution with {len(grid_states)} steps")
+        print("Use the interactive slideshow to review the solution steps")
 
     if solved and save_solution:
         save_solution_to_config(pieces, filename)
 
-
-    show_solution(grid)
-
+    # Keep the slideshow open for interactive navigation
+    if plt.get_fignums():  # Check if any figures exist
+        plt.ioff()  # Turn off interactive mode
+        plt.show(block=True)  # Show and block until window is closed
 
 
 if __name__ == "__main__":
